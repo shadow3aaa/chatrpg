@@ -1,23 +1,22 @@
-from plugins.base import OrganPlugin
+from plugins.base import OrganPlugin, OrganProperty
 
 
 class EndocrinePlugin(OrganPlugin):
     name = "endocrine"
+    display_name = "内分泌系统"
 
-    @property
-    def display_name(self) -> str:
-        return "内分泌系统"
+    adrenaline = OrganProperty(default=0.0, min_val=0, max_val=100, description="Fight-or-flight hormone.")
+    cortisol = OrganProperty(default=10.0, min_val=0, max_val=100, description="Stress hormone.")
+    endorphins = OrganProperty(default=20.0, min_val=0, max_val=100, description="Pain and stress-reducing hormones.")
 
     def __init__(self, engine):
         super().__init__(engine)
-        self.adrenaline = 0.0
-        self.cortisol = 10.0
-        self.endorphins = 20.0
 
     def update(self, tick_duration: float):
-        self.adrenaline = max(0, self.adrenaline - 5.0 * tick_duration)
-        self.cortisol = max(0, self.cortisol - 0.1 * tick_duration)
-        self.endorphins = max(0, self.endorphins - 0.5 * tick_duration)
+        # Hormones naturally decay over time
+        self.adrenaline -= 5.0 * tick_duration
+        self.cortisol -= 0.1 * tick_duration
+        self.endorphins -= 0.5 * tick_duration
 
     def get_sensations(self) -> list[str]:
         s = []
