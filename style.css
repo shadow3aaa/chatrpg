@@ -1,0 +1,40 @@
+Grid {
+    /* Define a grid with 2 columns and 4 rows */
+    grid-size: 2 4;
+    grid-gutter: 1;
+}
+
+OrganWidget {
+    width: 1fr;
+    height: 1fr;
+    border: round white;
+}
+
+#sensations {
+    column-span: 2;
+    width: 1fr;
+    height: 1fr;
+    border: round white;
+    padding: 1;
+}
+
+#interaction-pane {
+    column-span: 2;
+    row-span: 1;
+    height: 1fr;
+}
+
+#log {
+    border: round white;
+    margin-bottom: 1;
+    height: 1fr;
+}
+
+Input {
+    height: 30%;
+    min-height: 3;
+}
+
+Header, Footer {
+    height: 1;
+}
