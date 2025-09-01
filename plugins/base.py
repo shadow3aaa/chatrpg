@@ -11,6 +11,11 @@ class OrganPlugin(ABC):
         """A unique, lowercase name for the plugin (e.g., 'digestive')."""
         pass
 
+    @property
+    def display_name(self) -> str:
+        """A human-readable name for the plugin (e.g., 'Digestive System'). Defaults to a capitalized version of the internal name."""
+        return self.name.capitalize()
+
     @abstractmethod
     def __init__(self, engine):
         self.engine = engine

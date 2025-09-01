@@ -4,6 +4,10 @@ from plugins.base import OrganPlugin
 class DigestivePlugin(OrganPlugin):
     name = "digestive"
 
+    @property
+    def display_name(self) -> str:
+        return "消化系统"
+
     def __init__(self, engine):
         super().__init__(engine)
         self.fullness = 80.0

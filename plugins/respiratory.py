@@ -4,6 +4,10 @@ from plugins.base import OrganPlugin
 class RespiratoryPlugin(OrganPlugin):
     name = "respiratory"
 
+    @property
+    def display_name(self) -> str:
+        return "呼吸系统"
+
     def __init__(self, engine):
         super().__init__(engine)
         self.breathing_rate = 16.0

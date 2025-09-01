@@ -4,6 +4,10 @@ from plugins.base import OrganPlugin
 class EndocrinePlugin(OrganPlugin):
     name = "endocrine"
 
+    @property
+    def display_name(self) -> str:
+        return "内分泌系统"
+
     def __init__(self, engine):
         super().__init__(engine)
         self.adrenaline = 0.0

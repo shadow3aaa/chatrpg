@@ -13,7 +13,7 @@ API_BASE_URL = os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1")
 REFLEX_MODEL = os.getenv("REFLEX_MODEL_NAME", "gpt-5")
 PERSONA_MODEL = os.getenv("PERSONA_MODEL_NAME", "gpt-5")
 
-async def get_reflex_impact(event_description: str, current_body_state: dict) -> dict | None:
+async def get_reflex_impact(event_description: str, current_body_state: dict, organs_schema: str | None = None) -> dict | None:
     """
     Calls a compatible API to get the physiological impact of an event.
     Returns a dictionary with the changes, or None if an error occurs.
@@ -22,26 +22,42 @@ async def get_reflex_impact(event_description: str, current_body_state: dict) ->
         print("ERROR: OPENAI_API_KEY not found in environment variables.")
         return None
 
-    system_prompt = """你是一个生理反射模拟器。根据当前身体状态和发生的事件，计算此事件对身体造成的【直接、瞬时】的冲击。
+    schema_prompt_part = ""
+    if organs_schema:
+        schema_prompt_part = f"""
+[ALLOWED ATTRIBUTES SCHEMA]:
+You MUST strictly adhere to the following schema. Only use the plugin names and attributes provided below.
+{organs_schema}"""
 
-【输出格式要求】:
-1. 必须只输出JSON格式。
-2. 所有键名必须是小写字母和下划线的组合 (snake_case)。
-3. 表示变化的键必须以 '_change' 结尾，表示一次性冲击的键必须以 '_shock' 结尾。
-4. 数值必须是数字(integer or float)，而不是字符串。
+    system_prompt = f"""你是一个生理反射模拟器。根据当前身体状态和发生的事件，计算此事件对身体造成的【直接、瞬时】的冲击。
 
-【输出格式范例】:
-{"fullness_change": 50.0, "heart_rate_change": 10.0, "adrenaline_shock": 30.0}
+{schema_prompt_part}
+【OUTPUT FORMAT REQUIREMENTS】:
+1. MUST only output a JSON object.
+2. All top-level keys in the JSON MUST be plugin names as defined in the schema (e.g., "digestive", "circulatory").
+3. Each plugin object can only contain attributes listed for it in the schema.
+4. Attribute values MUST be strings representing the change, in the format "+=VALUE" or "-=VALUE". VALUE must be a number (integer or float).
 
-【任务开始】
-只输出JSON格式的【状态变化量】。不要输出任何解释。"""
+【OUTPUT EXAMPLE】:
+{{
+  "plugin_name_1": {{
+    "attribute_name_1": "+=10.0",
+    "attribute_name_2": "-=5.0"
+  }},
+  "plugin_name_2": {{
+    "attribute_name_3": "+=25.5"
+  }}
+}}
+
+【START TASK】
+Output ONLY the JSON object representing the state changes. Do not include any explanations.
+"""
     
     user_prompt = f"""[CURRENT BODY STATE]:
 {json.dumps(current_body_state, indent=2)}
 
 [EVENT]:
-\"{event_description}\"
-"""
+\"{event_description}\""""
 
     headers = {
         "Authorization": f"Bearer {API_KEY}",
@@ -66,6 +82,7 @@ async def get_reflex_impact(event_description: str, current_body_state: dict) ->
     except (httpx.HTTPStatusError, json.JSONDecodeError, KeyError) as e:
         print(f"Error calling Reflex API: {e}")
         return None
+
 
 async def get_persona_dialogue(event_description: str, reflex_impact: dict | None, final_body_state: dict, sensations: list[str]) -> str:
     """

@@ -4,6 +4,10 @@ from plugins.base import OrganPlugin
 class CirculatoryPlugin(OrganPlugin):
     name = "circulatory"
 
+    @property
+    def display_name(self) -> str:
+        return "循环系统"
+
     def __init__(self, engine):
         super().__init__(engine)
         self.base_heart_rate = 70.0

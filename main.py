@@ -27,8 +27,8 @@ class TuiApp(App):
                 # Use the custom widget provided by the plugin
                 plugin_widgets.append(WidgetClass(id=name))
             else:
-                # Use the default widget
-                plugin_widgets.append(OrganWidget(system_name=name.capitalize(), id=name))
+                # Use the default widget. The display_name is now guaranteed by the base class.
+                plugin_widgets.append(OrganWidget(system_name=plugin.display_name, id=name))
 
         yield Grid(
             *plugin_widgets,
@@ -83,7 +83,9 @@ class TuiApp(App):
             self.query_one(Input).value = ""
             self.log_widget.write(f"> {user_input}")
 
-            reflex_impact = await get_reflex_impact(user_input, self.engine.get_full_state())
+            # Generate schema for precise LLM reflection
+            organs_schema = self.engine.get_organs_schema()
+            reflex_impact = await get_reflex_impact(user_input, self.engine.get_full_state(), organs_schema)
 
             if reflex_impact:
                 self.engine.apply_impact(reflex_impact)

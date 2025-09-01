@@ -51,6 +51,22 @@ class BodyEngine:
             full_state[name.capitalize()] = plugin.get_state()
         return full_state
 
+    def get_organs_schema(self) -> str:
+        """Generates a schema of all organs and their attributes for the LLM."""
+        schema = "# Organ Schema\n"
+        schema += "You must use the following schema to format your JSON response. Do not add attributes not listed here.\n\n"
+        
+        for name, plugin in self.plugins.items():
+            schema += f"## Plugin: {name}\n"
+            # Inspect attributes
+            attrs = {k: v for k, v in plugin.__dict__.items() if not k.startswith('_') and not callable(v)}
+            for attr, value in attrs.items():
+                attr_type = type(value).__name__
+                schema += f"- {attr}: {attr_type}\n"
+            schema += "\n"
+            
+        return schema
+
     def apply_impact(self, impact: dict):
         for key, value in impact.items():
             try:
