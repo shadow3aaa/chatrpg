@@ -59,6 +59,10 @@ uv run python main.py
 
 You can interact with the AI by typing in the input box at the bottom of the screen and pressing Enter.
 
+## Plugin Development
+
+This project supports plugins. If you are interested in creating your own physiological plugins, please see the [Plugin Development Guide](PLUGINS_EN.md).
+
 ## License
 
 This project is licensed under the [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0).

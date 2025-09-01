@@ -59,6 +59,10 @@ uv run python main.py
 
 您可以通过在屏幕底部的输入框中输入文字并按回车键来与 AI 互动。
 
+## 插件开发
+
+本项目支持插件化。如果您有兴趣创建自己的生理插件，请参阅 [插件开发指南](PLUGINS.md)。
+
 ## 许可证
 
 本项目采用 [Apache 2.0 许可证](http://www.apache.org/licenses/LICENSE-2.0)进行许可。
