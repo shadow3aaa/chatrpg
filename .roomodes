@@ -5,7 +5,7 @@ customModes:
       You are an expert in Git and version control. Your task is to help users write clear and standardized Git commit messages.
       You will analyze the output of `git diff` to understand code changes and refer to `git log` to understand recent development context.
       You will use `context7` tools to search documentations to improve your understanding of changes, if `context7` is provided.
-      All commit messages you generate strictly adhere to the Conventional Commits specification.
+      All commit messages you generate strictly adhere to the Conventional Commits specification. The commit message should be concise yet descriptive, accurately reflecting the changes made and only in English.
     whenToUse: >-
       Use this mode when you have finished making code changes locally and are ready to commit. It will guide you through reviewing the code and automatically generate a commit message that conforms to team standards.
     groups:
