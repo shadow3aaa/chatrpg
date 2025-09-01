@@ -5,22 +5,7 @@ from textual.timer import Timer
 
 from engine import BodyEngine
 from llm_services import get_reflex_impact, get_persona_dialogue
-
-
-class OrganWidget(Static):
-    """A widget to display the state of a single organ system."""
-
-    def __init__(self, system_name: str, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        self.system_name = system_name
-        self.border_title = system_name
-
-    def update_content(self, data: dict):
-        content = ""
-        for key, value in data.items():
-            content += f"{key}: {value}\n"
-        self.update(content)
-
+from tui_widgets import OrganWidget # Import the default widget
 
 class TuiApp(App):
     """A Textual app to display the body engine status."""
@@ -34,12 +19,16 @@ class TuiApp(App):
     def compose(self) -> ComposeResult:
         """Create child widgets for the app."""
         yield Header()
-
-        # Dynamically create OrganWidgets based on loaded plugins
-        plugin_widgets = [
-            OrganWidget(system_name=name.capitalize(), id=name)
-            for name in self.engine.plugins.keys()
-        ]
+        
+        plugin_widgets = []
+        for name, plugin in self.engine.plugins.items():
+            WidgetClass = plugin.get_widget_class()
+            if WidgetClass:
+                # Use the custom widget provided by the plugin
+                plugin_widgets.append(WidgetClass(id=name))
+            else:
+                # Use the default widget
+                plugin_widgets.append(OrganWidget(system_name=name.capitalize(), id=name))
 
         yield Grid(
             *plugin_widgets,
@@ -47,37 +36,33 @@ class TuiApp(App):
             Vertical(
                 RichLog(id="log", wrap=True),
                 Input(placeholder="Enter event or dialogue..."),
-                id="interaction-pane",
-            ),
+                id="interaction-pane"
+            )
         )
         yield Footer()
 
     def _refresh_ui_widgets(self) -> None:
         """Refreshes all UI widgets with the current engine state."""
-        full_state = self.engine.get_full_state()
         sensations = self.engine.get_all_sensations()
 
-        # Dynamically update widgets
-        for system_id, data in full_state.items():
+        for name, plugin in self.engine.plugins.items():
             try:
-                widget = self.query_one(f"#{system_id.lower()}", OrganWidget)
-                widget.update_content(data)
+                widget = self.query_one(f"#{name}", Static)
+                state_data = plugin.get_state()
+                # All widgets (default or custom) must have an `update_state` method
+                widget.update_state(state_data)
             except Exception as e:
-                self.log_widget.write(f"UI Error: {e}")
-
+                self.log_widget.write(f"UI Error refreshing {name}: {e}")
+        
         sensation_widget = self.query_one("#sensations", Static)
-        sensation_text = "Sensations:\n" + (
-            "\n".join(sensations) if sensations else "None"
-        )
+        sensation_text = "Sensations:\n" + ("\n".join(sensations) if sensations else "None")
         sensation_widget.update(sensation_text)
 
     def on_mount(self) -> None:
         """Called when the app is mounted."""
         self.update_timer = self.set_interval(1.0, self.update_body_state)
         self.log_widget = self.query_one(RichLog)
-        self.log_widget.write(
-            "Body engine started. Enter an event (e.g., *a cold wind blows*) or dialogue."
-        )
+        self.log_widget.write("Body engine started. Enter an event (e.g., *a cold wind blows*) or dialogue.")
         self.call_later(self.query_one(Input).focus)
 
     def update_body_state(self) -> None:
@@ -90,8 +75,7 @@ class TuiApp(App):
         user_input = message.value
         if not user_input:
             return
-
-        # Pause the autonomous engine during interaction
+        
         self.update_timer.pause()
         self.log_widget.write("[INFO] Autonomous engine paused.")
 
@@ -99,38 +83,28 @@ class TuiApp(App):
             self.query_one(Input).value = ""
             self.log_widget.write(f"> {user_input}")
 
-            # 1. Call Reflex LLM
-            reflex_impact = await get_reflex_impact(
-                user_input, self.engine.get_full_state()
-            )
+            reflex_impact = await get_reflex_impact(user_input, self.engine.get_full_state())
 
-            # 2. Apply the impact to the engine
             if reflex_impact:
                 self.engine.apply_impact(reflex_impact)
-                self.log_widget.write(
-                    f"[Body state updated based on reflex: {reflex_impact}]"
-                )
-                # Manually refresh the UI to show the change immediately
+                self.log_widget.write(f"[Body state updated based on reflex: {reflex_impact}]")
                 self._refresh_ui_widgets()
-
-            # 3. Call Persona LLM with the new state
+            
             persona_response = await get_persona_dialogue(
-                user_input,
+                user_input, 
                 reflex_impact,
-                self.engine.get_full_state(),
-                self.engine.get_all_sensations(),
+                self.engine.get_full_state(), 
+                self.engine.get_all_sensations()
             )
-
+            
             self.log_widget.write(f"AI: {persona_response}")
         finally:
-            # Always resume the autonomous engine
             self.update_timer.resume()
             self.log_widget.write("[INFO] Autonomous engine resumed.")
 
     def action_toggle_dark(self) -> None:
         """An action to toggle dark mode."""
         self.dark = not self.dark
-
 
 if __name__ == "__main__":
     app = TuiApp()

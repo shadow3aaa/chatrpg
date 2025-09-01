@@ -1,4 +1,6 @@
 from abc import ABC, abstractmethod
+from typing import Type
+from textual.widget import Widget
 
 class OrganPlugin(ABC):
     """The interface that all organ plugins must implement."""
@@ -27,3 +29,7 @@ class OrganPlugin(ABC):
     def get_state(self) -> dict[str, str]:
         """Return a dictionary of states for TUI display."""
         pass
+
+    def get_widget_class(self) -> Type[Widget] | None:
+        """Optionally return a custom Textual Widget class for this plugin."""
+        return None
