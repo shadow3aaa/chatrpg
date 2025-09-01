@@ -7,7 +7,7 @@ from engine import BodyEngine
 from llm_services import get_reflex_impact, get_persona_dialogue
 from tui_widgets import OrganWidget # Import the default widget
 
-class TuiApp(App):
+class ChatRPG(App):
     """A Textual app to display the body engine status."""
 
     CSS_PATH = "style.css"
@@ -34,7 +34,7 @@ class TuiApp(App):
             *plugin_widgets,
             Static("Sensations", id="sensations"),
             Vertical(
-                RichLog(id="log", wrap=True),
+                RichLog(id="log", wrap=True, markup=True),
                 Input(placeholder="Enter event or dialogue..."),
                 id="interaction-pane"
             )
@@ -52,7 +52,7 @@ class TuiApp(App):
                 # All widgets (default or custom) must have an `update_state` method
                 widget.update_state(state_data)
             except Exception as e:
-                self.log_widget.write(f"UI Error refreshing {name}: {e}")
+                self.log_widget.write(f"[bold white on red]CRITICAL UI ERROR: {e}[/bold white on red]")
         
         sensation_widget = self.query_one("#sensations", Static)
         sensation_text = "Sensations:\n" + ("\n".join(sensations) if sensations else "None")
@@ -62,7 +62,7 @@ class TuiApp(App):
         """Called when the app is mounted."""
         self.update_timer = self.set_interval(1.0, self.update_body_state)
         self.log_widget = self.query_one(RichLog)
-        self.log_widget.write("Body engine started. Enter an event (e.g., *a cold wind blows*) or dialogue.")
+        self.log_widget.write("[bold green]Body engine started.[/bold green] Enter an event (e.g., *a cold wind blows*) or dialogue.")
         self.call_later(self.query_one(Input).focus)
 
     def update_body_state(self) -> None:
@@ -77,11 +77,11 @@ class TuiApp(App):
             return
         
         self.update_timer.pause()
-        self.log_widget.write("[INFO] Autonomous engine paused.")
+        self.log_widget.write("[silver][INFO] Autonomous engine paused.[/silver]")
 
         try:
             self.query_one(Input).value = ""
-            self.log_widget.write(f"> {user_input}")
+            self.log_widget.write(f"You: {user_input}")
 
             # Generate schema for precise LLM reflection
             organs_schema = self.engine.get_organs_schema()
@@ -89,7 +89,17 @@ class TuiApp(App):
 
             if reflex_impact:
                 self.engine.apply_impact(reflex_impact)
-                self.log_widget.write(f"[Body state updated based on reflex: {reflex_impact}]")
+                formatted_impact_messages = []
+                for system_name, attributes in reflex_impact.items():
+                    for attribute, operator_value in attributes.items():
+                        formatted_impact_messages.append(f"{attribute} {operator_value}")
+                
+                if formatted_impact_messages:
+                    impact_text = "\n".join(formatted_impact_messages)
+                    self.log_widget.write(f"[yellow]{impact_text}[/yellow]")
+                else:
+                    self.log_widget.write("[yellow]Body state updated based on reflex.[/yellow]") # Fallback if no specific changes
+                
                 self._refresh_ui_widgets()
             
             persona_response = await get_persona_dialogue(
@@ -99,15 +109,18 @@ class TuiApp(App):
                 self.engine.get_all_sensations()
             )
             
-            self.log_widget.write(f"AI: {persona_response}")
+            self.log_widget.write(f"[bold green]AI:[/bold green] {persona_response}")
+        except Exception as e:
+            self.log_widget.write(f"[bold white on red]CRITICAL APPLICATION ERROR: {e}[/bold white on red]")
         finally:
             self.update_timer.resume()
-            self.log_widget.write("[INFO] Autonomous engine resumed.")
+            self.log_widget.write("[silver][INFO] Autonomous engine resumed.[/silver]")
 
     def action_toggle_dark(self) -> None:
         """An action to toggle dark mode."""
         self.dark = not self.dark
 
 if __name__ == "__main__":
-    app = TuiApp()
+    app = ChatRPG()
     app.run()
+
