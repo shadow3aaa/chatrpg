@@ -11,7 +11,7 @@ class DigestivePlugin(OrganPlugin):
     def __init__(self, engine):
         super().__init__(engine)
         self.fullness = 80.0
-        self.digest_rate = 0.5
+        self.digest_rate = 0.1
         self.nutrient_buffer = 50.0
 
     def update(self, tick_duration: float):

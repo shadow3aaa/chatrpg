@@ -17,11 +17,11 @@ class CirculatoryPlugin(OrganPlugin):
     def update(self, tick_duration: float):
         if self.heart_rate > self.base_heart_rate:
             self.heart_rate = max(
-                self.base_heart_rate, self.heart_rate - 1.0 * tick_duration
+                self.base_heart_rate, self.heart_rate - 0.1 * tick_duration
             )
         else:
             self.heart_rate = min(
-                self.base_heart_rate, self.heart_rate + 1.0 * tick_duration
+                self.base_heart_rate, self.heart_rate + 0.5 * tick_duration
             )
 
     def get_sensations(self) -> list[str]:
